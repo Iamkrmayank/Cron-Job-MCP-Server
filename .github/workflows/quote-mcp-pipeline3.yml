@@ -31,6 +31,11 @@ jobs:
             sleep $STEP_DELAY
           }
 
+          call POST /merge_text/merge-textual-data
+          call POST /match/match-alt-text
+          call POST /resizer/generate-resized-urls
+          call POST /distribute/distribute-urls
+          call POST /videometa/video-meta
           call POST /metadata/generate-metadata
           call POST /rotate/rotate-metadata
           call POST /reorder/reorder
