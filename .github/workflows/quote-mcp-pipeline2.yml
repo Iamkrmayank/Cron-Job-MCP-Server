@@ -3,7 +3,7 @@ name: 🦜‍⬛ Quote-MCP Pipeline – Part 2
 # Run at 02:10 UTC daily
 on:
   schedule:
-    - cron: '20 2 * * *'
+    - cron: '36 16 * * *'
 
 jobs:
   run-part2:
