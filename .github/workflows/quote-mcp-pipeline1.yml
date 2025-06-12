@@ -32,5 +32,4 @@ jobs:
 
           call POST /quotes/scrape-from-db
           call POST /generate/structure
-          call POST /images/batch-author-images
           call POST /azure/submit-batch
