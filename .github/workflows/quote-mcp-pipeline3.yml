@@ -1,0 +1,36 @@
+name: 🦜‍⬛ Quote-MCP Pipeline – Part 3
+
+# Run at 02:20 UTC daily
+on:
+  schedule:
+    - cron: '30 2 * * *'
+
+jobs:
+  run-part3:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: "http://172.188.80.68/mcp1"
+      STEP_DELAY: 5
+
+    steps:
+      - name: Trigger Part 3 Endpoints
+        run: |
+          set -euo pipefail
+
+          call() {
+            METHOD=$1; ENDPOINT=$2
+            echo "→ $METHOD ${BASE_URL}${ENDPOINT}"
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X "$METHOD" "${BASE_URL}${ENDPOINT}" \
+              -H "Content-Type: application/json")
+            if [ "$STATUS" -ge 400 ]; then
+              echo "✗ $ENDPOINT failed (HTTP $STATUS)"
+              exit 1
+            fi
+            echo "✓ HTTP $STATUS"
+            sleep $STEP_DELAY
+          }
+
+          call POST /metadata/generate-metadata
+          call POST /rotate/rotate-metadata
+          call POST /reorder/reorder
