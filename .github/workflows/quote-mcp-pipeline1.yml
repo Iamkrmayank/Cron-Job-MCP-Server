@@ -1,0 +1,54 @@
+name: 🦜‍⬛ Quote-MCP Pipeline – Part 1
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 02:00 UTC daily
+
+jobs:
+  run-part1:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: "http://172.188.80.68/mcp1"
+
+    steps:
+      - name: Trigger Part 1 Endpoints (strict sequencing + timeout)
+        run: |
+          set -euo pipefail
+
+          # $1 = HTTP method, $2 = path, $3 = max-time in seconds
+          run_step() {
+            local METHOD=$1
+            local ENDPOINT=$2
+            local MAX_T=$3
+
+            echo "→ $METHOD ${BASE_URL}${ENDPOINT} (timeout ${MAX_T}s)"
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time "$MAX_T" \
+              -X "$METHOD" \
+              "${BASE_URL}${ENDPOINT}" \
+              -H "Content-Type: application/json" \
+            ) || true   # prevent curl’s non-zero exit from killing the script
+
+            if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
+              echo "✓ ${ENDPOINT} succeeded (HTTP $HTTP_CODE)"
+              return 0
+            else
+              echo "✗ ${ENDPOINT} failed (HTTP $HTTP_CODE)"
+              return 1
+            fi
+          }
+
+          # 1. Fetch & scrape quotes (may take long; wait up to 300s)
+          if run_step POST /quotes/scrape-from-db 300; then
+            # 2. Structure text (quick; wait up to 30s)
+            if run_step POST /generate/structure 30; then
+              # 3. Download images (long; wait up to 300s)
+              if run_step POST /images/batch-author-images 300; then
+                # 4. Submit text to Azure batch (quick; wait up to 30s)
+                if run_step POST /azure/submit-batch 30; then
+                  # 5. Submit images to Azure (quick; wait up to 30s)
+                  run_step POST /track/batch-image-alt 30
+                fi
+              fi
+            fi
+          fi
