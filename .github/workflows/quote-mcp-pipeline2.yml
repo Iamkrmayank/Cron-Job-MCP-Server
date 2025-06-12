@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BASE_URL: "http://172.188.80.68/mcp1"
-      STEP_DELAY: 5
+      STEP_DELAY: 300
 
     steps:
       - name: Trigger Part 2 Endpoints
@@ -30,9 +30,7 @@ jobs:
             echo "✓ HTTP $STATUS"
             sleep $STEP_DELAY
           }
+          
 
-          call POST /merge_text/merge-textual-data
-          call POST /match/match-alt-text
-          call POST /resizer/generate-resized-urls
-          call POST /distribute/distribute-urls
-          call POST /videometa/video-meta
+          call POST /images/batch-author-images
+          call POST /track/batch-image-alt
